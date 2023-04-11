@@ -15,9 +15,6 @@ import { EffectRef, SettableSignal, Signal, createSignalFromRef } from './api.js
 export function signal<T>(initialValue: T): SettableSignal<T> {
     const ref = shallowRef(initialValue);
     return createSignalFromRef(ref, {
-        peek() {
-            return untracked(() => ref.value);
-        },
         set(value: T) {
             ref.value = value;
         },
@@ -36,11 +33,7 @@ export function signal<T>(initialValue: T): SettableSignal<T> {
  */
 export function computed<T>(computation: () => T): Signal<T> {
     const ref = _computed(computation);
-    return createSignalFromRef(ref, {
-        peek() {
-            return untracked(() => ref.value);
-        },
-    });
+    return createSignalFromRef(ref);
 }
 
 /**
@@ -69,8 +62,6 @@ export function untracked<T>(nonReactiveReadsFunc: () => T): T {
     return value;
 }
 
-export type { EffectRef, SettableSignal, Signal };
-
 /**
  * Exposes the value of a `Signal` as a Vue `Ref`.
  */
@@ -88,3 +79,7 @@ export function fromRef<T>(ref: Ref<T>): Signal<T> {
         },
     });
 }
+
+export { store } from './store.js';
+export type { Identifiable, Store, StoreOptions, ToString } from './store.js';
+export type { EffectRef, SettableSignal, Signal };

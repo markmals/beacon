@@ -1,4 +1,5 @@
 import type { Ref } from '@vue/reactivity';
+import { untracked } from '.';
 
 export type Signal<T> = (() => T) & {
     /**
@@ -52,9 +53,18 @@ export interface EffectRef {
 export function createSignalFromRef<T, U extends Record<string, unknown> = {}>(
     ref: Ref<T>,
     extraAPI: U = {} as U
-): (() => T) & U {
+): Signal<T> & U {
     const func = () => ref.value;
-    (extraAPI as any)._ref = ref;
+
+    const signal = {
+        _ref: ref,
+        peek() {
+            return untracked(() => ref.value);
+        },
+    };
+
+    Object.assign(extraAPI, signal);
+
     // Copy properties from `extraAPI` to `func` to complete the desired API of the `Signal`.
-    return Object.assign(func, extraAPI);
+    return Object.assign(func, extraAPI) as Signal<T> & U;
 }
