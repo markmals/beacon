@@ -32,7 +32,8 @@
         "prettier": "latest",
         "typescript": "latest",
         "unbuild": "latest",
-        "vitest": "latest"
+        "vitest": "latest",
+        "vue": "^3.2.47"
     },
     "prettier": {
         "printWidth": 100,
