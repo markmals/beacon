@@ -1,5 +1,5 @@
 import { SettableSignal, Signal, createSignalFromRef } from './api.js';
-import { fromSignal, signal } from './index.js';
+import { computed, fromSignal, signal } from './index.js';
 import {
     BrowserStorageEngine,
     MemoryStorageEngine,
@@ -43,9 +43,7 @@ class StoreImpl<Output extends Identifiable> {
         }
     }
 
-    isEmpty(): boolean {
-        return this.value().length === 0;
-    }
+    isEmpty = computed(() => this.value().length === 0);
 
     add(item: Output | Output[]) {
         let currentValuesMap = new Map<string, Output>();
@@ -143,6 +141,6 @@ export function store<Output extends Identifiable>({
         add: node.add.bind(node),
         delete: node.delete.bind(node),
         clear: node.clear.bind(node),
-        isEmpty: node.isEmpty.bind(node),
+        isEmpty: node.isEmpty,
     });
 }

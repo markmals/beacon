@@ -7,7 +7,7 @@ import {
     shallowRef,
     triggerRef,
 } from '@vue/reactivity';
-import { EffectRef, SettableSignal, Signal, createSignalFromRef } from './api.js';
+import { EffectRef, InternalSignal, SettableSignal, Signal, createSignalFromRef } from './api.js';
 
 /**
  * Create a `Signal` that can be set or updated directly.
@@ -66,18 +66,14 @@ export function untracked<T>(nonReactiveReadsFunc: () => T): T {
  * Exposes the value of a `Signal` as a Vue `Ref`.
  */
 export function fromSignal<T>(signal: SettableSignal<T>): Ref<T> {
-    return (signal as any)._ref;
+    return (signal as unknown as InternalSignal<T>)._ref;
 }
 
 /**
  * Get the current value of a `Ref` as a reactive `Signal`.
  */
 export function fromRef<T>(ref: Ref<T>): Signal<T> {
-    return createSignalFromRef(ref, {
-        peek() {
-            return untracked(() => ref.value);
-        },
-    });
+    return createSignalFromRef(ref);
 }
 
 export { store } from './store.js';

@@ -1,10 +1,11 @@
 import type { Ref } from '@vue/reactivity';
 import { untracked } from '.';
 
+export type InternalSignal<T> = Signal<T> & { _ref: Ref<T> };
+
 export type Signal<T> = (() => T) & {
     /**
-     * Returns the current value of the signal without notifying the reactive graph
-     * that `this` producer was accessed.
+     * Returns the current value of the signal without notifying any dependents.
      */
     peek(): T;
 };
@@ -54,17 +55,14 @@ export function createSignalFromRef<T, U extends Record<string, unknown> = {}>(
     ref: Ref<T>,
     extraAPI: U = {} as U
 ): Signal<T> & U {
-    const func = () => ref.value;
+    const signal = () => ref.value;
 
-    const signal = {
+    // Copy properties from `extraAPI` to `signal` to complete the desired API of the `Signal`.
+    return Object.assign(signal, {
         _ref: ref,
         peek() {
-            return untracked(() => ref.value);
+            return untracked(signal);
         },
-    };
-
-    Object.assign(extraAPI, signal);
-
-    // Copy properties from `extraAPI` to `func` to complete the desired API of the `Signal`.
-    return Object.assign(func, extraAPI) as Signal<T> & U;
+        ...extraAPI,
+    }) satisfies InternalSignal<T>;
 }
