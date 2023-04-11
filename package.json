@@ -24,12 +24,15 @@
         "prepack": "unbuild",
         "release": "npm run build && np"
     },
+    "dependencies": {
+        "@vue/reactivity": "^3.2.47"
+    },
     "devDependencies": {
+        "np": "latest",
+        "prettier": "latest",
         "typescript": "latest",
         "unbuild": "latest",
-        "vitest": "latest",
-        "np": "latest",
-        "prettier": "latest"
+        "vitest": "latest"
     },
     "prettier": {
         "printWidth": 100,

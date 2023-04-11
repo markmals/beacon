@@ -1,88 +1,60 @@
-/**
- * Symbol used to tell `Signal`s apart from other functions.
- *
- * This can be used to auto-unwrap signals in various cases, or to auto-wrap non-signal values.
- */
-const SIGNAL = Symbol('SIGNAL');
+import type { Ref } from '@vue/reactivity';
 
-/**
- * A reactive value which notifies consumers of any changes.
- *
- * Signals are functions which returns their current value. To access the current value of a signal,
- * call it.
- *
- * Ordinary values can be turned into `Signal`s with the `signal` function.
- */
 export type Signal<T> = (() => T) & {
-    [SIGNAL]: true;
-
     /**
-     * Returns the signal's current value without subscribing to changes when inside an effect.
-     *
-     * @remarks The scenarios in which you don't want to subscribe to a signal are rare.
-     * In most cases you want your effect to subscribe to all signals. Only use .peek()
-     * when you really need to.
+     * Returns the current value of the signal without notifying the reactive graph
+     * that `this` producer was accessed.
      */
     peek(): T;
 };
 
 /**
- * Checks if the given `value` function is a reactive `Signal`.
+ * A `Signal` with a value that can be mutated via a setter interface.
  */
-export function isSignal(value: Function): value is Signal<unknown> {
-    return (value as Signal<unknown>)[SIGNAL] ?? false;
+export interface SettableSignal<T> extends Signal<T> {
+    /**
+     * Directly set the signal to a new value, and notify any dependents.
+     */
+    set(value: T): void;
+
+    /**
+     * Update the value of the signal based on its current value, and
+     * notify any dependents.
+     */
+    update(updateFunc: (value: T) => T): void;
+
+    /**
+     * Update the current value by mutating it in-place, and
+     * notify any dependents.
+     */
+    mutate(mutatorFunc: (value: T) => void): void;
 }
 
 /**
- * Converts `fn` into a marked signal function (where `isSignal(fn)` will be `true`).
- *
- * @param fn A zero-argument function which will be converted into a `Signal`.
+ * A global reactive effect, which can be manually scheduled or destroyed.
  */
-export function createSignalFromFunction<T>(fn: () => T): Signal<T>;
+export interface EffectRef {
+    /**
+     * Schedule the effect for manual execution, if it's not already.
+     */
+    schedule(): void;
 
-/**
- * Converts `fn` into a marked signal function (where `isSignal(fn)` will be `true`), and
- * potentially add some set of extra properties (passed as an object record `extraApi`).
- *
- * @param fn A zero-argument function which will be converted into a `Signal`.
- * @param extraApi An object whose properties will be copied onto `fn` in order to create a specific
- *     desired interface for the `Signal`.
- */
-export function createSignalFromFunction<T, U extends Record<string, unknown>>(
-    fn: () => T,
-    extraApi: U
-): Signal<T> & U;
-
-/**
- * Converts `fn` into a marked signal function (where `isSignal(fn)` will be `true`), and
- * potentially add some set of extra properties (passed as an object record `extraApi`).
- */
-export function createSignalFromFunction<T, U extends Record<string, unknown> = {}>(
-    fn: () => T,
-    extraApi: U = {} as U
-): Signal<T> & U {
-    (fn as any)[SIGNAL] = true;
-    // Copy properties from `extraApi` to `fn` to complete the desired API of the `Signal`.
-    return Object.assign(fn, extraApi) as Signal<T> & U;
+    /**
+     * Shut down the effect, removing it from any upcoming scheduled executions.
+     */
+    destroy(): void;
 }
 
 /**
- * A comparison function which can determine if two values are equal.
+ * Converts `func` into a signal function, and potentially add some set of extra
+ * properties (passed as an object record `extraAPI`).
  */
-export type ValueEqualityFn<T> = (a: T, b: T) => boolean;
-
-/**
- * The default equality function used for `signal` and `computed`, which treats objects and arrays
- * as never equal, and all other primitive values using identity semantics.
- *
- * This allows signals to hold non-primitive values (arrays, objects, other collections) and still
- * propagate change notification upon explicit mutation without identity change.
- */
-export function defaultEquals<T>(a: T, b: T) {
-    // `Object.is` compares two values using identity semantics which is desired behavior for
-    // primitive values. If `Object.is` determines two values to be equal we need to make sure that
-    // those don't represent objects (we want to make sure that 2 objects are always considered
-    // "unequal"). The null check is needed for the special case of JavaScript reporting null values
-    // as objects (`typeof null === 'object'`).
-    return (a === null || typeof a !== 'object') && Object.is(a, b);
+export function createSignalFromRef<T, U extends Record<string, unknown> = {}>(
+    ref: Ref<T>,
+    extraAPI: U = {} as U
+): (() => T) & U {
+    const func = () => ref.value;
+    (extraAPI as any)._ref = ref;
+    // Copy properties from `extraAPI` to `func` to complete the desired API of the `Signal`.
+    return Object.assign(func, extraAPI);
 }
