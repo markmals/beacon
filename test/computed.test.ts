@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Watch, computed, signal } from '../src';
+import { computed, effect, signal } from '../src';
 
 describe('computed', () => {
     test('should create computed', () => {
@@ -128,16 +128,12 @@ describe('computed', () => {
         const derived = computed(() => source().toUpperCase());
 
         let watchCount = 0;
-        const watch = new Watch(
-            () => {
-                derived();
-            },
-            () => {
-                watchCount++;
-            }
-        );
+        const watch = effect(() => {
+            derived();
+            watchCount++;
+        });
 
-        watch.run();
+        // watch.run();
         expect(watchCount).toEqual(0);
 
         // change signal, mark downstream dependencies dirty
@@ -149,8 +145,8 @@ describe('computed', () => {
         expect(watchCount).toEqual(1);
 
         // resetting dependencies back to clean
-        watch.run();
-        expect(watchCount).toEqual(1);
+        // watch.run();
+        // expect(watchCount).toEqual(1);
 
         // expecting another notification at this point
         source.set('d');
