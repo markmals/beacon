@@ -1,10 +1,6 @@
-import { SettableSignal, Signal, createSignalFromRef } from './api.js';
-import { computed, fromSignal, signal } from './index.js';
-import {
-    BrowserStorageEngine,
-    MemoryStorageEngine,
-    StorageEngine,
-} from './storage-engines/index.js';
+import { SettableSignal, Signal, createSignalFromRef } from './api';
+import { computed, signal, toRef } from './index';
+import { BrowserStorageEngine, MemoryStorageEngine, StorageEngine } from './storage-engines/index';
 
 export interface ToString {
     toString(): string;
@@ -16,7 +12,7 @@ export interface Identifiable {
 
 export interface StoreOptions<Output> {
     key: string;
-    provider?: typeof MemoryStorageEngine<Output> | typeof BrowserStorageEngine<Output>;
+    storageProvider?: typeof MemoryStorageEngine<Output> | typeof BrowserStorageEngine<Output>;
     initialValue?: Output[];
 }
 
@@ -31,8 +27,12 @@ class StoreImpl<Output extends Identifiable> {
     value: SettableSignal<Output[]>;
     private storageEngine: StorageEngine<Output>;
 
-    constructor({ key, provider = BrowserStorageEngine, initialValue }: StoreOptions<Output>) {
-        this.storageEngine = new provider(key);
+    constructor({
+        key,
+        storageProvider = BrowserStorageEngine,
+        initialValue,
+    }: StoreOptions<Output>) {
+        this.storageEngine = new storageProvider(key);
 
         if (initialValue !== undefined) {
             this.value = signal(initialValue);
@@ -59,7 +59,7 @@ class StoreImpl<Output extends Identifiable> {
             }
 
             // Take the current items array and turn it into a Map.
-            for (let currentItem of this.value()) {
+            for (let currentItem of this.value.peek()) {
                 currentValuesMap.set(currentItem.id.toString(), currentItem);
             }
 
@@ -73,7 +73,7 @@ class StoreImpl<Output extends Identifiable> {
         } else {
             let identifier = item.id.toString();
 
-            for (let currentItem of this.value()) {
+            for (let currentItem of this.value.peek()) {
                 currentValuesMap.set(currentItem.id.toString(), currentItem);
             }
 
@@ -97,6 +97,7 @@ class StoreImpl<Output extends Identifiable> {
     }
 
     // TODO: Patch?
+    // update(item: Partial<Output> | Partial<Output>[]) {}
 
     clear() {
         this.storageEngine.clear();
@@ -130,14 +131,12 @@ class StoreImpl<Output extends Identifiable> {
 
 export function store<Output extends Identifiable>({
     key,
-    provider = BrowserStorageEngine,
+    storageProvider = BrowserStorageEngine,
     initialValue,
 }: StoreOptions<Output>): Store<Output> {
-    const node = new StoreImpl({ key, provider, initialValue });
-    return createSignalFromRef(fromSignal(node.value), {
-        peek() {
-            return node.value.peek();
-        },
+    const node = new StoreImpl({ key, storageProvider, initialValue });
+    return createSignalFromRef(toRef(node.value), {
+        peek: node.value.peek.bind(node.value),
         add: node.add.bind(node),
         delete: node.delete.bind(node),
         clear: node.clear.bind(node),
