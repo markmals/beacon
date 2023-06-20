@@ -76,7 +76,6 @@ export function toSignal<T>(ref: Ref<T>): Signal<T> {
     return createSignalFromRef(ref);
 }
 
-export { Observable } from './observable';
 export { resource } from './resource';
 export { store } from './store';
 export type { Identifiable, Store, StoreOptions, ToString } from './store';

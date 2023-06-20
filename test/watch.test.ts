@@ -1,35 +1,27 @@
-import { afterEach, describe, expect, test } from 'vitest';
-import { computed, signal } from '../src';
-import { flushEffects, resetEffects, testingEffect } from './effect-utils';
+import { describe, expect, test } from 'vitest';
+import { computed, effect, signal } from '../src';
 
 describe('watchers', () => {
-    afterEach(() => {
-        resetEffects();
-    });
-
     test('should create and run once, even without dependencies', () => {
         let runs = 0;
 
-        testingEffect(() => {
+        effect(() => {
             runs++;
         });
 
-        flushEffects();
         expect(runs).toEqual(1);
     });
 
     test('should schedule on dependencies (signal) change', () => {
         const count = signal(0);
         let runLog: number[] = [];
-        const effectRef = testingEffect(() => {
+        effect(() => {
             runLog.push(count());
         });
 
-        flushEffects();
         expect(runLog).toEqual([0]);
 
         count.set(1);
-        flushEffects();
         expect(runLog).toEqual([0, 1]);
     });
 
@@ -40,28 +32,23 @@ describe('watchers', () => {
         const useCountA = signal(true);
 
         const runLog: number[] = [];
-        testingEffect(() => {
+        effect(() => {
             runLog.push(useCountA() ? countA() : countB());
         });
 
-        flushEffects();
         expect(runLog).toEqual([0]);
 
         countB.update(increment);
-        flushEffects();
         // No update expected: updated the wrong signal.
         expect(runLog).toEqual([0]);
 
         countA.update(increment);
-        flushEffects();
         expect(runLog).toEqual([0, 1]);
 
         useCountA.set(false);
-        flushEffects();
         expect(runLog).toEqual([0, 1, 101]);
 
         countA.update(increment);
-        flushEffects();
         // No update expected: updated the wrong signal.
         expect(runLog).toEqual([0, 1, 101]);
     });
@@ -70,24 +57,20 @@ describe('watchers', () => {
         const source = signal(0);
         const isEven = computed(() => source() % 2 === 0);
         let updateCounter = 0;
-        testingEffect(() => {
+        effect(() => {
             isEven();
             updateCounter++;
         });
 
-        flushEffects();
         expect(updateCounter).toEqual(1);
 
         source.set(1);
-        flushEffects();
         expect(updateCounter).toEqual(2);
 
         source.set(3);
-        flushEffects();
         expect(updateCounter).toEqual(2);
 
         source.set(4);
-        flushEffects();
         expect(updateCounter).toEqual(3);
     });
 

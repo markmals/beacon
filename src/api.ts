@@ -1,4 +1,6 @@
 import type { Ref } from '@vue/reactivity';
+import type { Readable, Subscriber, Writable } from 'svelte/store';
+import { watch } from 'vue';
 import { untracked } from '.';
 
 export type InternalSignal<T> = Signal<T> & { _ref: Ref<T> };
@@ -8,12 +10,12 @@ export type Signal<T> = (() => T) & {
      * Returns the current value of the signal without notifying any dependents.
      */
     peek(): T;
-};
+} & Readable<T>;
 
 /**
  * A `Signal` with a value that can be mutated via a setter interface.
  */
-export interface SettableSignal<T> extends Signal<T> {
+export interface SettableSignal<T> extends Signal<T>, Writable<T> {
     /**
      * Directly set the signal to a new value, and notify any dependents.
      */
@@ -62,6 +64,9 @@ export function createSignalFromRef<T, U extends Record<string, unknown> = {}>(
         _ref: ref,
         peek() {
             return untracked(signal);
+        },
+        subscribe: (run: Subscriber<T>) => {
+            return watch(ref, run);
         },
         ...extraAPI,
     }) satisfies InternalSignal<T>;

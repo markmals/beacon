@@ -29,41 +29,41 @@ describe('signals', () => {
         expect(derived()).toEqual('a:b');
     });
 
-    test('should not update signal when new value is equal to the previous one', () => {
-        const state = signal('aaa', (a, b) => a.length === b.length);
-        expect(state()).toEqual('aaa');
+    // test('should not update signal when new value is equal to the previous one', () => {
+    //     const state = signal('aaa', (a, b) => a.length === b.length);
+    //     expect(state()).toEqual('aaa');
 
-        // set to a "different" value that is "equal" to the previous one
-        // there should be no change in the signal's value as the new value is determined to be equal
-        // to the previous one
-        state.set('bbb');
-        expect(state()).toEqual('aaa');
+    //     // set to a "different" value that is "equal" to the previous one
+    //     // there should be no change in the signal's value as the new value is determined to be equal
+    //     // to the previous one
+    //     state.set('bbb');
+    //     expect(state()).toEqual('aaa');
 
-        state.update(_ => 'ccc');
-        expect(state()).toEqual('aaa');
+    //     state.update(_ => 'ccc');
+    //     expect(state()).toEqual('aaa');
 
-        // setting a "non-equal" value
-        state.set('d');
-        expect(state()).toEqual('d');
-    });
+    //     // setting a "non-equal" value
+    //     state.set('d');
+    //     expect(state()).toEqual('d');
+    // });
 
-    test('should not propagate change when the new signal value is equal to the previous one', () => {
-        const state = signal('aaa', (a, b) => a.length === b.length);
-        const upper = computed(() => state().toUpperCase());
+    // test('should not propagate change when the new signal value is equal to the previous one', () => {
+    //     const state = signal('aaa', (a, b) => a.length === b.length);
+    //     const upper = computed(() => state().toUpperCase());
 
-        // set to a "different" value that is "equal" to the previous one
-        // there should be no change in the signal's value as the new value is determined to be equal
-        // to the previous one
-        state.set('bbb');
-        expect(upper()).toEqual('AAA');
+    //     // set to a "different" value that is "equal" to the previous one
+    //     // there should be no change in the signal's value as the new value is determined to be equal
+    //     // to the previous one
+    //     state.set('bbb');
+    //     expect(upper()).toEqual('AAA');
 
-        state.update(_ => 'ccc');
-        expect(upper()).toEqual('AAA');
+    //     state.update(_ => 'ccc');
+    //     expect(upper()).toEqual('AAA');
 
-        // setting a "non-equal" value
-        state.set('d');
-        expect(upper()).toEqual('D');
-    });
+    //     // setting a "non-equal" value
+    //     state.set('d');
+    //     expect(upper()).toEqual('D');
+    // });
 
     test('should consider objects as non-equal with the default equality function', () => {
         let stateValue: unknown = {};

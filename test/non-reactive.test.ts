@@ -1,12 +1,7 @@
-import { afterEach, describe, expect, test } from 'vitest';
-import { computed, signal, untracked } from '../src';
-import { flushEffects, resetEffects, testingEffect } from './effect-utils';
+import { describe, expect, test } from 'vitest';
+import { computed, effect, signal, untracked } from '../src';
 
 describe('non-reactive reads', () => {
-    afterEach(() => {
-        resetEffects();
-    });
-
     test('should read the latest value from signal', () => {
         const counter = signal(0);
 
@@ -40,17 +35,15 @@ describe('non-reactive reads', () => {
         const s = signal(1);
 
         const runLog: number[] = [];
-        testingEffect(() => {
+        effect(() => {
             runLog.push(untracked(s));
         });
 
         // an effect will run at least once
-        flushEffects();
         expect(runLog).toEqual([1]);
 
         // subsequent signal changes should not trigger effects as signal is untracked
         s.set(2);
-        flushEffects();
         expect(runLog).toEqual([1]);
     });
 
@@ -59,15 +52,13 @@ describe('non-reactive reads', () => {
         const double = computed(() => count() * 2);
 
         let runLog: number[] = [];
-        testingEffect(() => {
+        effect(() => {
             runLog.push(double());
         });
 
-        flushEffects();
         expect(runLog).toEqual([0]);
 
         count.set(1);
-        flushEffects();
         expect(runLog).toEqual([0, 2]);
     });
 
@@ -76,22 +67,19 @@ describe('non-reactive reads', () => {
         const last = signal('Doe');
 
         let runLog: string[] = [];
-        const effectRef = testingEffect(() => {
+        effect(() => {
             untracked(() => runLog.push(`${first()} ${last()}`));
         });
 
         // effects run at least once
-        flushEffects();
         expect(runLog).toEqual(['John Doe']);
 
         // change one of the signals - should not update as not read reactively
         first.set('Patricia');
-        flushEffects();
         expect(runLog).toEqual(['John Doe']);
 
         // change one of the signals - should not update as not read reactively
         last.set('Garcia');
-        flushEffects();
         expect(runLog).toEqual(['John Doe']);
     });
 });

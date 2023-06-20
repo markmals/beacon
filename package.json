@@ -30,6 +30,7 @@
     "devDependencies": {
         "np": "latest",
         "prettier": "latest",
+        "svelte": "^3.59.1",
         "typescript": "latest",
         "unbuild": "latest",
         "vitest": "latest",

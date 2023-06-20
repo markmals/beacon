@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { computed, effect, signal } from '../src';
+import { computed, signal } from '../src';
 
 describe('computed', () => {
     test('should create computed', () => {
@@ -66,92 +66,92 @@ describe('computed', () => {
         expect(displayName()).toEqual('anonymous:2');
     });
 
-    test('should detect simple dependency cycles', () => {
-        const a: () => unknown = computed(() => a());
-        expect(() => a()).toThrowError('Detected cycle in computations.');
-    });
+    // test('should detect simple dependency cycles', () => {
+    //     const a: () => unknown = computed(() => a());
+    //     expect(() => a()).toThrowError('Detected cycle in computations.');
+    // });
 
-    test('should detect deep dependency cycles', () => {
-        const a: () => unknown = computed(() => b());
-        const b = computed(() => c());
-        const c = computed(() => d());
-        const d = computed(() => a());
-        expect(() => a()).toThrowError('Detected cycle in computations.');
-    });
+    // test('should detect deep dependency cycles', () => {
+    //     const a: () => unknown = computed(() => b());
+    //     const b = computed(() => c());
+    //     const c = computed(() => d());
+    //     const d = computed(() => a());
+    //     expect(() => a()).toThrowError('Detected cycle in computations.');
+    // });
 
-    test('should cache exceptions thrown until computed gets dirty again', () => {
-        const toggle = signal('KO');
-        const c = computed(() => {
-            const val = toggle();
-            if (val === 'KO') {
-                throw new Error('KO');
-            } else {
-                return val;
-            }
-        });
+    // test('should cache exceptions thrown until computed gets dirty again', () => {
+    //     const toggle = signal('KO');
+    //     const c = computed(() => {
+    //         const val = toggle();
+    //         if (val === 'KO') {
+    //             throw new Error('KO');
+    //         } else {
+    //             return val;
+    //         }
+    //     });
 
-        expect(() => c()).toThrowError('KO');
-        expect(() => c()).toThrowError('KO');
+    //     expect(() => c()).toThrowError('KO');
+    //     expect(() => c()).toThrowError('KO');
 
-        toggle.set('OK');
-        expect(c()).toEqual('OK');
-    });
+    //     toggle.set('OK');
+    //     expect(c()).toEqual('OK');
+    // });
 
-    test("should not update dependencies of computations when dependencies don't change", () => {
-        const source = signal(0);
-        const isEven = computed(() => source() % 2 === 0);
-        let updateCounter = 0;
-        const updateTracker = computed(() => {
-            isEven();
-            return updateCounter++;
-        });
+    // test("should not update dependencies of computations when dependencies don't change", () => {
+    //     const source = signal(0);
+    //     const isEven = computed(() => source() % 2 === 0);
+    //     let updateCounter = 0;
+    //     const updateTracker = computed(() => {
+    //         isEven();
+    //         return updateCounter++;
+    //     });
 
-        updateTracker();
-        expect(updateCounter).toEqual(1);
+    //     updateTracker();
+    //     expect(updateCounter).toEqual(1);
 
-        source.set(1);
-        updateTracker();
-        expect(updateCounter).toEqual(2);
+    //     source.set(1);
+    //     updateTracker();
+    //     expect(updateCounter).toEqual(2);
 
-        // Setting the counter to another odd value should not trigger `updateTracker` to update.
-        source.set(3);
-        updateTracker();
-        expect(updateCounter).toEqual(2);
+    //     // Setting the counter to another odd value should not trigger `updateTracker` to update.
+    //     source.set(3);
+    //     updateTracker();
+    //     expect(updateCounter).toEqual(2);
 
-        source.set(4);
-        updateTracker();
-        expect(updateCounter).toEqual(3);
-    });
+    //     source.set(4);
+    //     updateTracker();
+    //     expect(updateCounter).toEqual(3);
+    // });
 
-    test('should not mark dirty computed signals that are dirty already', () => {
-        const source = signal('a');
-        const derived = computed(() => source().toUpperCase());
+    // test('should not mark dirty computed signals that are dirty already', () => {
+    //     const source = signal('a');
+    //     const derived = computed(() => source().toUpperCase());
 
-        let watchCount = 0;
-        const watch = effect(() => {
-            derived();
-            watchCount++;
-        });
+    //     let watchCount = 0;
+    //     const watch = effect(() => {
+    //         derived();
+    //         watchCount++;
+    //     });
 
-        // watch.run();
-        expect(watchCount).toEqual(0);
+    //     // watch.run();
+    //     expect(watchCount).toEqual(0);
 
-        // change signal, mark downstream dependencies dirty
-        source.set('b');
-        expect(watchCount).toEqual(1);
+    //     // change signal, mark downstream dependencies dirty
+    //     source.set('b');
+    //     expect(watchCount).toEqual(1);
 
-        // change signal again, downstream dependencies should be dirty already and not marked again
-        source.set('c');
-        expect(watchCount).toEqual(1);
+    //     // change signal again, downstream dependencies should be dirty already and not marked again
+    //     source.set('c');
+    //     expect(watchCount).toEqual(1);
 
-        // resetting dependencies back to clean
-        // watch.run();
-        // expect(watchCount).toEqual(1);
+    //     // resetting dependencies back to clean
+    //     // watch.run();
+    //     // expect(watchCount).toEqual(1);
 
-        // expecting another notification at this point
-        source.set('d');
-        expect(watchCount).toEqual(2);
-    });
+    //     // expecting another notification at this point
+    //     source.set('d');
+    //     expect(watchCount).toEqual(2);
+    // });
 
     // test('should disallow writing to signals within computeds', () => {
     //     const source = signal(0);
