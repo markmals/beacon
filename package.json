@@ -25,16 +25,20 @@
         "release": "npm run build && np"
     },
     "peerDependencies": {
-        "@vue/reactivity": "^3.2.47"
+        "@vue/reactivity": "^3.3.4",
+        "lit": "^3.0.0"
     },
     "devDependencies": {
-        "np": "latest",
-        "prettier": "latest",
-        "svelte": "^3.59.1",
-        "typescript": "latest",
-        "unbuild": "latest",
-        "vitest": "latest",
-        "vue": "^3.2.47"
+        "@rollup/plugin-typescript": "^11.1.5",
+        "jsdom": "^22.1.0",
+        "lit": "^3.0.0",
+        "prettier": "^3.0.3",
+        "tslib": "^2.6.2",
+        "typescript": "^5.2.2",
+        "unbuild": "^2.0.0",
+        "vite-plugin-typescript": "^1.0.4",
+        "vitest": "^0.34.6",
+        "vue": "^3.3.4"
     },
     "prettier": {
         "printWidth": 100,
@@ -42,8 +46,5 @@
         "semi": true,
         "singleQuote": true,
         "arrowParens": "avoid"
-    },
-    "np": {
-        "yarn": false
     }
 }

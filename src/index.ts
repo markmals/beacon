@@ -1,52 +1,76 @@
 import {
-    Ref,
-    computed as _computed,
-    effect as _effect,
+    UnwrapRef,
+    computed,
     pauseTracking,
+    ref,
     resetTracking,
-    shallowRef,
-    triggerRef,
+    effect as watchEffect,
 } from '@vue/reactivity';
-import { EffectRef, InternalSignal, SettableSignal, Signal, createSignalFromRef } from './api';
+
+export interface ReadableSignal<T> {
+    get value(): T;
+}
+
+export interface WritableSignal<T> extends ReadableSignal<T> {
+    set value(newValue: T);
+}
+
+export interface EffectRef {
+    destroy(): void;
+}
+
+(Symbol as any).signal ??= Symbol.for('beacon');
 
 /**
- * Create a `Signal` that can be set or updated directly.
+ * Create a deeply reactive `Signal` that can be set or updated directly.
  */
-export function signal<T>(initialValue: T): SettableSignal<T> {
-    const ref = shallowRef(initialValue);
-    return createSignalFromRef(ref, {
-        set(value: T) {
-            ref.value = value;
+export function signal<T>(initialValue: T): WritableSignal<T> {
+    const instance = ref(initialValue);
+    return {
+        [(Symbol as any).signal]: true,
+        get value() {
+            return instance.value as T;
         },
-        update(updater: (value: T) => T) {
-            ref.value = updater(ref.value);
+        set value(newValue) {
+            instance.value = newValue as UnwrapRef<T>;
         },
-        mutate(mutator: (value: T) => void) {
-            mutator(ref.value);
-            triggerRef(ref);
-        },
-    });
+    } as WritableSignal<T>;
 }
 
 /**
- * Create a computed `Signal` which derives a reactive value from an expression.
+ * Create a derived `Signal` which derives a reactive value from an expression.
  */
-export function computed<T>(computation: () => T): Signal<T> {
-    const ref = _computed(computation);
-    return createSignalFromRef(ref);
+export function derived<T>(expression: () => T): ReadableSignal<T> {
+    return {
+        [(Symbol as any).signal]: true,
+        get value() {
+            return expression();
+        },
+    } as ReadableSignal<T>;
+}
+
+/**
+ * Create a memoized `Signal` which derives a reactive value from an expression.
+ */
+export function memo<T>(computation: () => T): ReadableSignal<T> {
+    const instance = computed(computation);
+    return {
+        [(Symbol as any).signal]: true,
+        get value() {
+            return instance.value;
+        },
+    } as ReadableSignal<T>;
 }
 
 /**
  * Create a global `Effect` for the given reactive function.
  */
 export function effect(effectFunc: () => void): EffectRef {
-    const runner = _effect(effectFunc);
+    // { lazy: false } ?
+    const unwatch = watchEffect(effectFunc);
     return {
-        schedule() {
-            runner.effect.run();
-        },
         destroy() {
-            runner.effect.stop();
+            unwatch();
         },
     };
 }
@@ -55,28 +79,13 @@ export function effect(effectFunc: () => void): EffectRef {
  * Execute an arbitrary function in a non-reactive (non-tracking) context. The executed function
  * can, optionally, return a value.
  */
-export function untracked<T>(nonReactiveReadsFunc: () => T): T {
+export function untrack<T>(nonReactiveReadsFunc: () => T): T {
     pauseTracking();
     const value = nonReactiveReadsFunc();
     resetTracking();
     return value;
 }
 
-/**
- * Exposes the value of a `Signal` as a @vue/reactivity `Ref`.
- */
-export function toRef<T>(signal: SettableSignal<T>): Ref<T> {
-    return (signal as unknown as InternalSignal<T>)._ref;
+export function isSignal<T>(value: unknown): value is ReadableSignal<T> {
+    return (value as any)?.[(Symbol as any).signal];
 }
-
-/**
- * Get the current value of a @vue/reactivity `Ref` as a `Signal`.
- */
-export function toSignal<T>(ref: Ref<T>): Signal<T> {
-    return createSignalFromRef(ref);
-}
-
-export { resource } from './resource';
-export { store } from './store';
-export type { Identifiable, Store, StoreOptions, ToString } from './store';
-export type { EffectRef, SettableSignal, Signal };

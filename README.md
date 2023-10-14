@@ -1,30 +1,38 @@
 # Beacon
 
-Beacon is a fine-grained reactive state management library for TypeScript and JavaScript. It takes inspiration from [Solid](https://www.solidjs.com/guides/reactivity), [Preact](https://preactjs.com/guide/v10/signals/), [Vue](https://vuejs.org/guide/extras/reactivity-in-depth.html), and [Angular](https://github.com/angular/angular/tree/main/packages/core/src/signals). Beacon uses `@vue/reactivity` under the hood and should work with any Vue projects.
+Beacon is a pull-based reactive state management library for TypeScript and JavaScript. It takes inspiration from [Preact](https://preactjs.com/guide/v10/signals/), [Vue](https://vuejs.org/guide/extras/reactivity-in-depth.html), and [Solid](https://www.solidjs.com/guides/reactivity). It uses `@vue/reactivity` under the hood and should work with any Vue projects.
+
+Beacon was designed with usage in [Lit](https://lit.dev/) and [`lit-html`](https://github.com/lit/lit/tree/main/packages/lit-html) in mind. Integrations with Lit and `lit-html`, similar to [`@lit-labs/preact-signals`](https://github.com/lit/lit/tree/main/packages/labs/preact-signals), are provided in [`/src/lit`](src/lit).
 
 ## Usage
 
 ```typescript
-import { signal, computed, effect } from '@beacon/core';
+import { signal, derived, memo, effect } from 'beacon-signals';
 
 const counter = signal(0);
 
-counter.set(2);
-counter.update(count => count + 1);
+counter.value = 2;
+counter.value += 1;
 
 const todoList = signal<Todo[]>([]);
 
-todoList.mutate(list => {
-    list.push({ title: 'One more task', completed: false });
-});
+// Signals are deeply reactive
+todoList.value.push({ title: 'One more task', completed: false });
 
 // Automatically updates when `counter` changes:
-const isEven = computed(() => counter() % 2 === 0);
+const isEven = derived(() => counter.value % 2 === 0);
+const isEvenComputation = memo(() => {
+    if (counter.value % 2 === 0) {
+        return someExpensiveComputation()
+    }
 
-effect(() => console.log('The counter is:', counter()));
+    return someOtherExpensiveComputation()
+})
+
+effect(() => console.log('The counter is:', counter.value));
 // The counter is: 3
 
-counter.set(1);
+counter.value = 1;
 // The counter is: 1
 ```
 
