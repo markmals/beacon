@@ -1,5 +1,8 @@
 # Beacon
 
+> [!NOTE]  
+> Beacon is not yet published to npm.
+
 Beacon is a pull-based reactive state management library for TypeScript and JavaScript. It takes inspiration from [Preact](https://preactjs.com/guide/v10/signals/), [Vue](https://vuejs.org/guide/extras/reactivity-in-depth.html), and [Solid](https://www.solidjs.com/guides/reactivity). It uses `@vue/reactivity` under the hood and should work with any Vue projects.
 
 Beacon was designed with usage in [Lit](https://lit.dev/) and [`lit-html`](https://github.com/lit/lit/tree/main/packages/lit-html) in mind. Integrations with Lit and `lit-html`, similar to [`@lit-labs/preact-signals`](https://github.com/lit/lit/tree/main/packages/labs/preact-signals), are provided in [`/src/lit`](src/lit).
