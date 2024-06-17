@@ -23,7 +23,7 @@ describe('signals', () => {
 
         expect(computed()).toEqual('a');
 
-        state().push('b');
+        state.mutate(v => v.push('b'));
         expect(computed()).toEqual('a:b');
     });
 
