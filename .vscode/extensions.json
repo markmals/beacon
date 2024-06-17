@@ -1,7 +1,3 @@
 {
-    "recommendations": [
-        "christian-kohler.npm-intellisense",
-        "esbenp.prettier-vscode",
-        "ZixuanChen.vitest-explorer"
-    ]
+    "recommendations": ["christian-kohler.npm-intellisense", "esbenp.prettier-vscode"]
 }

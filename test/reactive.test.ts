@@ -54,9 +54,7 @@ describe('@reactive classes', () => {
 
     it('should update reactively', () => {
         let rxTitle: string | undefined = undefined;
-        effect(() => {
-            rxTitle = book.title;
-        });
+        effect(() => (rxTitle = book.title));
         expect(rxTitle).toEqual('The Shining');
 
         book.title += ': Part II';

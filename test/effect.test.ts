@@ -1,53 +1,45 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { effect, signal } from '../src';
 
 describe('side effects', () => {
-    test('should create and run once, even without dependencies', () => {
+    it('should create and run once, even without dependencies', () => {
         let runs = 0;
-
-        effect(() => {
-            runs++;
-        });
-
+        effect(() => runs++);
         expect(runs).toEqual(1);
     });
 
-    test('should schedule on dependencies (signal) change', () => {
+    it('should schedule on dependencies (signal) change', () => {
         const count = signal(0);
         let runLog: number[] = [];
-        effect(() => {
-            runLog.push(count.value);
-        });
+        effect(() => runLog.push(count()));
 
         expect(runLog).toEqual([0]);
 
-        count.value = 1;
+        count.set(1);
         expect(runLog).toEqual([0, 1]);
     });
 
-    test('should not schedule when a previous dependency changes', () => {
+    it('should not schedule when a previous dependency changes', () => {
         const countA = signal(0);
         const countB = signal(100);
         const useCountA = signal(true);
 
         const runLog: number[] = [];
-        effect(() => {
-            runLog.push(useCountA.value ? countA.value : countB.value);
-        });
+        effect(() => runLog.push(useCountA() ? countA() : countB()));
 
         expect(runLog).toEqual([0]);
 
-        countB.value += 1;
+        countB.update(v => v + 1);
         // No update expected: updated the wrong signal.
         expect(runLog).toEqual([0]);
 
-        countA.value += 1;
+        countA.update(v => v + 1);
         expect(runLog).toEqual([0, 1]);
 
-        useCountA.value = false;
+        useCountA.set(false);
         expect(runLog).toEqual([0, 1, 101]);
 
-        countA.value += 1;
+        countA.update(v => v + 1);
         // No update expected: updated the wrong signal.
         expect(runLog).toEqual([0, 1, 101]);
     });

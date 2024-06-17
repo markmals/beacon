@@ -5,30 +5,30 @@ describe('non-reactive reads', () => {
     test('should read the latest value from signal', () => {
         const counter = signal(0);
 
-        expect(untrack(() => counter.value)).toEqual(0);
+        expect(untrack(() => counter())).toEqual(0);
 
-        counter.value = 1;
-        expect(untrack(() => counter.value)).toEqual(1);
+        counter.set(1);
+        expect(untrack(() => counter())).toEqual(1);
     });
 
     test('should not add dependencies to computed when reading a value from a signal', () => {
         const counter = signal(0);
-        const double = memo(() => untrack(() => counter.value) * 2);
+        const double = memo(() => untrack(() => counter()) * 2);
 
-        expect(double.value).toEqual(0);
+        expect(double()).toEqual(0);
 
-        counter.value = 2;
-        expect(double.value).toEqual(0);
+        counter.set(2);
+        expect(double()).toEqual(0);
     });
 
     test('should refresh computed value if stale and read non-reactively ', () => {
         const counter = signal(0);
-        const double = memo(() => counter.value * 2);
+        const double = memo(() => counter() * 2);
 
-        expect(untrack(() => double.value)).toEqual(0);
+        expect(untrack(() => double())).toEqual(0);
 
-        counter.value = 2;
-        expect(untrack(() => double.value)).toEqual(4);
+        counter.set(2);
+        expect(untrack(() => double())).toEqual(4);
     });
 
     test('should not make surrounding effect depend on the signal', () => {
@@ -36,29 +36,27 @@ describe('non-reactive reads', () => {
 
         const runLog: number[] = [];
         effect(() => {
-            runLog.push(untrack(() => s.value));
+            runLog.push(untrack(() => s()));
         });
 
         // an effect will run at least once
         expect(runLog).toEqual([1]);
 
         // subsequent signal changes should not trigger effects as signal is untracked
-        s.value = 2;
+        s.set(2);
         expect(runLog).toEqual([1]);
     });
 
     test('should schedule on dependencies (computed) change', () => {
         const count = signal(0);
-        const double = memo(() => count.value * 2);
+        const double = memo(() => count() * 2);
 
         let runLog: number[] = [];
-        effect(() => {
-            runLog.push(double.value);
-        });
+        effect(() => runLog.push(double()));
 
         expect(runLog).toEqual([0]);
 
-        count.value = 1;
+        count.set(1);
         expect(runLog).toEqual([0, 2]);
     });
 
@@ -68,18 +66,18 @@ describe('non-reactive reads', () => {
 
         let runLog: string[] = [];
         effect(() => {
-            untrack(() => runLog.push(`${first.value} ${last.value}`));
+            untrack(() => runLog.push(`${first()} ${last()}`));
         });
 
         // effects run at least once
         expect(runLog).toEqual(['John Doe']);
 
         // change one of the signals - should not update as not read reactively
-        first.value = 'Patricia';
+        first.set('Patricia');
         expect(runLog).toEqual(['John Doe']);
 
         // change one of the signals - should not update as not read reactively
-        last.value = 'Garcia';
+        last.set('Garcia');
         expect(runLog).toEqual(['John Doe']);
     });
 });

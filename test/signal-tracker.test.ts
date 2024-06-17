@@ -22,7 +22,7 @@ describe('SignalTracker', () => {
         const count = signal(0);
         class TestElement extends SignalTracker(LitElement) {
             override render() {
-                return html`<p>count: ${count.value}</p>`;
+                return html`<p>count: ${count()}</p>`;
             }
         }
         customElements.define(generateElementName(), TestElement);
@@ -32,7 +32,7 @@ describe('SignalTracker', () => {
         await el.updateComplete;
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('count: 0');
 
-        count.value = 1;
+        count.set(1);
 
         await el.updateComplete;
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('count: 1');
@@ -43,12 +43,12 @@ describe('SignalTracker', () => {
         const count = signal(0);
         const countPlusOne = memo(() => {
             readCount++;
-            return count.value + 1;
+            return count() + 1;
         });
 
         class TestElement extends SignalTracker(LitElement) {
             override render() {
-                return html`<p>count: ${countPlusOne.value}</p>`;
+                return html`<p>count: ${countPlusOne()}</p>`;
             }
         }
         customElements.define(generateElementName(), TestElement);
@@ -65,7 +65,7 @@ describe('SignalTracker', () => {
         await el.updateComplete;
 
         // Expect no reads while disconnected
-        count.value = 1;
+        count.set(1);
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('count: 1');
         expect(readCount).toEqual(1);
 
@@ -85,7 +85,7 @@ describe('SignalTracker', () => {
         expect(readCount).toEqual(1);
 
         // And signal updates propagate again - and we get the new value
-        count.value = 2;
+        count.set(2);
         expect(el.isUpdatePending).toBeTruthy();
         await el.updateComplete;
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('count: 3');

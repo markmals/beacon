@@ -32,7 +32,7 @@ describe('html tag', () => {
         await el.updateComplete;
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('count: 0');
 
-        count.value = 1;
+        count.set(1);
 
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('count: 1');
     });

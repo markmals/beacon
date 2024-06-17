@@ -40,7 +40,7 @@ describe('watch directive', () => {
         expect(renderCount).toEqual(1);
 
         // The DOM updates because signal update
-        count.value = 1;
+        count.set(1);
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('count: 1');
         // The updated DOM is not because of an element render
         expect(renderCount).toEqual(1);
@@ -51,7 +51,7 @@ describe('watch directive', () => {
         const count = signal(0);
         const countPlusOne = memo(() => {
             readCount++;
-            return count.value + 1;
+            return count() + 1;
         });
 
         class TestElement extends LitElement {
@@ -73,7 +73,7 @@ describe('watch directive', () => {
         await el.updateComplete;
 
         // Expect no reads while disconnected
-        count.value = 1;
+        count.set(1);
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('count: 1');
         expect(readCount).toEqual(1);
 
@@ -92,7 +92,7 @@ describe('watch directive', () => {
         expect(readCount).toEqual(2);
 
         // And signal updates propagate again
-        count.value = 2;
+        count.set(2);
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('count: 3');
         expect(readCount).toEqual(3);
     });
@@ -102,7 +102,7 @@ describe('watch directive', () => {
         const count = signal(0);
         const countPlusOne = memo(() => {
             readCount++;
-            return count.value + 1;
+            return count() + 1;
         });
 
         class TestElement extends LitElement {
@@ -137,7 +137,7 @@ describe('watch directive', () => {
         await el.updateComplete;
 
         // Expect no reads while disconnected
-        count.value = 1;
+        count.set(1);
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('value: string');
         expect(readCount).toEqual(1);
 
@@ -150,7 +150,7 @@ describe('watch directive', () => {
         expect(readCount).toEqual(2);
 
         // And signal updates propagate again
-        count.value = 2;
+        count.set(2);
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('value: 3');
         expect(readCount).toEqual(3);
     });
@@ -172,7 +172,7 @@ describe('watch directive', () => {
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('count: 0');
         expect(renderCount).toEqual(1);
 
-        count.value = 1;
+        count.set(1);
         expect(el.shadowRoot?.querySelector('p')?.textContent).toEqual('count: 1');
         // The updated DOM is not because of an element render
         expect(renderCount, 'A').toEqual(1);

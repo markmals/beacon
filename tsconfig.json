@@ -3,7 +3,7 @@
         "strict": true,
         "module": "ESNext",
         "target": "ES2022",
-        "lib": ["DOM", "DOM.Iterable", "ESNext", "ESNext.Decorators"],
+        "lib": ["DOM", "DOM.Iterable", "ESNext", "ESNext.Decorators", "ESNext.Disposable"],
         "skipLibCheck": true,
 
         /* Bundler mode */

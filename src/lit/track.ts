@@ -1,24 +1,24 @@
 import { AsyncDirective } from 'lit/async-directive.js';
 import { directive } from 'lit/directive.js';
-import { EffectRef, ReadableSignal, effect, untrack } from '..';
+import { ReadableSignal, effect, untrack } from '..';
 
 class TrackDirective extends AsyncDirective {
     #signal?: ReadableSignal<unknown>;
-    #ref?: EffectRef;
+    #cleanup?: DisposableStack;
 
     override render(signal: ReadableSignal<unknown>) {
         if (signal !== this.#signal) {
-            this.#ref?.destroy();
+            this.#cleanup?.dispose();
             this.#signal = signal;
 
             // Whether the subscribe() callback is called because of this render
             // pass, or because of a separate signal update.
             let updateFromLit = true;
-            this.#ref = effect(() => {
+            this.#cleanup = effect(() => {
                 // The subscribe() callback is called synchronously during subscribe.
                 // Ignore the first call since we return the value below in that case.
                 if (updateFromLit === false) {
-                    this.setValue(signal.value);
+                    this.setValue(signal());
                 }
             });
             updateFromLit = false;
@@ -28,11 +28,11 @@ class TrackDirective extends AsyncDirective {
         // created by SignalTracker.performUpdate(). This means that a signal
         // update won't trigger a full element update if it's only passed to
         // track() and not otherwise accessed by the element.
-        return untrack(() => signal.value);
+        return untrack(signal);
     }
 
     protected override disconnected(): void {
-        this.#ref?.destroy();
+        this.#cleanup?.dispose();
     }
 
     protected override reconnected(): void {
@@ -49,8 +49,8 @@ class TrackDirective extends AsyncDirective {
         // so the synchronous call here will go before a render call, and we'll get
         // two sets of the value (setValue() here and the return in render()), but
         // this is ok because the value will be dirty-checked by lit-html.
-        this.#ref = effect(() => {
-            this.setValue(this.#signal?.value);
+        this.#cleanup = effect(() => {
+            this.setValue(this.#signal?.());
         });
     }
 }

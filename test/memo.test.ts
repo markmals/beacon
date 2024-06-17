@@ -6,48 +6,48 @@ describe('memo', () => {
         const counter = signal(0);
 
         let memoRunCount = 0;
-        const double = memo(() => `${counter.value * 2}:${++memoRunCount}`);
+        const double = memo(() => `${counter() * 2}:${++memoRunCount}`);
 
-        expect(double.value).toEqual('0:1');
+        expect(double()).toEqual('0:1');
 
-        counter.value = 1;
-        expect(double.value).toEqual('2:2');
-        expect(double.value).toEqual('2:2');
+        counter.set(1);
+        expect(double()).toEqual('2:2');
+        expect(double()).toEqual('2:2');
 
-        counter.value = 2;
-        expect(double.value).toEqual('4:3');
-        expect(double.value).toEqual('4:3');
+        counter.set(2);
+        expect(double()).toEqual('4:3');
+        expect(double()).toEqual('4:3');
     });
 
     test('should not re-compute if there are no dependencies', () => {
         let tick = 0;
         const c = memo(() => ++tick);
 
-        expect(c.value).toEqual(1);
-        expect(c.value).toEqual(1);
+        expect(c()).toEqual(1);
+        expect(c()).toEqual(1);
     });
 
     test('should not re-compute if the dependency is a primitive value and the value did not change', () => {
         const counter = signal(0);
 
         let memoRunCount = 0;
-        const double = memo(() => `${counter.value * 2}:${++memoRunCount}`);
+        const double = memo(() => `${counter() * 2}:${++memoRunCount}`);
 
-        expect(double.value).toEqual('0:1');
+        expect(double()).toEqual('0:1');
 
-        counter.value = 0;
-        expect(double.value).toEqual('0:1');
+        counter.set(0);
+        expect(double()).toEqual('0:1');
     });
 
     test('should chain memo', () => {
         const name = signal('abc');
-        const reverse = memo(() => name.value.split('').reverse().join(''));
-        const upper = memo(() => reverse.value.toUpperCase());
+        const reverse = memo(() => name().split('').reverse().join(''));
+        const upper = memo(() => reverse().toUpperCase());
 
-        expect(upper.value).toEqual('CBA');
+        expect(upper()).toEqual('CBA');
 
-        name.value = 'foo';
-        expect(upper.value).toEqual('OOF');
+        name.set('foo');
+        expect(upper()).toEqual('OOF');
     });
 
     test('should evaluate memo only when subscribing', () => {
@@ -55,17 +55,15 @@ describe('memo', () => {
         const show = signal(true);
 
         let computeCount = 0;
-        const displayName = memo(
-            () => `${show.value ? name.value : 'anonymous'}:${++computeCount}`,
-        );
+        const displayName = memo(() => `${show() ? name() : 'anonymous'}:${++computeCount}`);
 
-        expect(displayName.value).toEqual('John:1');
+        expect(displayName()).toEqual('John:1');
 
-        show.value = false;
-        expect(displayName.value).toEqual('anonymous:2');
+        show.set(false);
+        expect(displayName()).toEqual('anonymous:2');
 
-        name.value = 'Bob';
-        expect(displayName.value).toEqual('anonymous:2');
+        name.set('Bob');
+        expect(displayName()).toEqual('anonymous:2');
     });
 
     // test('should not mark dirty memo signals that are dirty already', () => {

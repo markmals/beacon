@@ -1,5 +1,5 @@
 import { LitElement, type ReactiveElement } from 'lit';
-import { EffectRef, effect } from '..';
+import { effect } from '..';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ReactiveElementConstructor = new (...args: any[]) => ReactiveElement;
@@ -11,7 +11,7 @@ type ReactiveElementConstructor = new (...args: any[]) => ReactiveElement;
  */
 export function SignalTracker<T extends ReactiveElementConstructor>(Base: T): T {
     return class SignalTracker extends Base {
-        #ref?: EffectRef;
+        #cleanup?: DisposableStack;
 
         override performUpdate() {
             // ReactiveElement.performUpdate() also does this check, so we want to
@@ -21,7 +21,7 @@ export function SignalTracker<T extends ReactiveElementConstructor>(Base: T): T 
                 return;
             }
             // If we have a previous effect, dispose it
-            this.#ref?.destroy();
+            this.#cleanup?.dispose();
 
             // Tracks whether the effect callback is triggered by this performUpdate
             // call directly, or by a signal change.
@@ -35,7 +35,7 @@ export function SignalTracker<T extends ReactiveElementConstructor>(Base: T): T 
             //  - from signals
             //  - from both (do we get one or two re-renders)
             // and see if we really need a new effect here.
-            this.#ref = effect(() => {
+            this.#cleanup = effect(() => {
                 if (updateFromLit) {
                     updateFromLit = false;
                     super.performUpdate();
@@ -57,7 +57,7 @@ export function SignalTracker<T extends ReactiveElementConstructor>(Base: T): T 
 
         override disconnectedCallback(): void {
             super.disconnectedCallback();
-            this.#ref?.destroy();
+            this.#cleanup?.dispose();
         }
     };
 }
