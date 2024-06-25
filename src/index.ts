@@ -11,6 +11,7 @@ export type WritableSignal<T> = ReadableSignal<T> & {
     set(newValue: T): void;
     update(updater: (oldValue: T) => T): void;
     mutate(mutator: (value: T) => void): void;
+    changes(): AsyncIterable<T> & Disposable;
 };
 
 /**
@@ -24,6 +25,44 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
     signal.update = updater => updater(state.get());
     // TODO: In-place mutation
     // signal.mutate = mutator => mutator(state.get())
+
+    const changes = () => ({
+        disposable: undefined as DisposableStack | undefined,
+
+        async *[Symbol.asyncIterator]() {
+            let promises: Promise<T>[] = [];
+            let resolve: (value: T) => void;
+            promises.push(
+                new Promise(r => {
+                    resolve = r;
+                }),
+            );
+
+            let memoized = new Signal.Computed(signal);
+
+            this.disposable = effect(() => {
+                resolve(memoized.get());
+                promises.push(
+                    new Promise(r => {
+                        resolve = r;
+                    }),
+                );
+            });
+
+            for (let promise of promises) {
+                let value = await promise;
+                delete promises[promises.indexOf(promise)];
+                yield value;
+            }
+        },
+
+        [Symbol.dispose]() {
+            this.disposable?.[Symbol.dispose]?.();
+        },
+    });
+
+    signal.changes = changes;
+
     return signal;
 }
 
