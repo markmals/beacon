@@ -65,9 +65,6 @@ export function reactive<TargetCtor extends ReactiveClassCtor>() {
                 const untrackedProps = (metadata[UNTRACKED] ??= []) as (string | symbol)[];
 
                 return createProxy({ value: this as ReactiveObject, untrackedProps });
-
-                // TODO: Don't override existing getter/setter pairs
-                // TODO: Make sure to explicitly ignore functions
             }
         } as TargetCtor;
     };
@@ -108,11 +105,7 @@ export function memo<Host, Value>() {
         let computed: Signal.Computed<Value>;
 
         return function (this: Host) {
-            if (computed === undefined) {
-                computed = new Signal.Computed(value.bind(this));
-            }
-
-            return computed.get();
+            return (computed ??= new Signal.Computed(value.bind(this))).get();
         };
     };
 }
@@ -209,8 +202,6 @@ function createHandler({
         },
 
         get(target, key, receiver) {
-            // if (prop === READONLY_SYMBOL) return target[READONLY_SYMBOL]
-
             const metadata = target[REACTIVE];
             let state = metadata.signals.get(key);
 
@@ -219,8 +210,7 @@ function createHandler({
             if (
                 state === undefined &&
                 !untrackedProps.includes(key) &&
-                // TODO: create `effect_active` and `updating_derived` functions
-                // (effect_active() || updating_derived) &&
+                Signal.subtle.currentComputed() !== null &&
                 (!(key in target) || Object.getOwnPropertyDescriptor(target, key)?.writable)
             ) {
                 state = new Signal.State(createProxy({ value: target[key] }));
@@ -257,11 +247,8 @@ function createHandler({
                 state !== undefined ||
                 // TODO: How to ignore observation here
                 // !ignoredProperties.includes(prop) &&
-                // TODO: create `effect_active` function
-                // (effect_active() &&
-                !has ||
+                (Signal.subtle.currentComputed() !== null && !has) ||
                 Object.getOwnPropertyDescriptor(target, key)?.writable
-                // )
             ) {
                 if (state === undefined) {
                     state = new Signal.State(
@@ -278,11 +265,6 @@ function createHandler({
         },
 
         set(target, key, value) {
-            // if (prop === READONLY_SYMBOL) {
-            //     target[READONLY_SYMBOL] = value
-            //     return true
-            // }
-
             const metadata = target[REACTIVE];
 
             const state = metadata.signals.get(key);
