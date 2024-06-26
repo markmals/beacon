@@ -8,60 +8,60 @@ declare global {
 
 (Symbol.signal as any) = Symbol.for('signal');
 
-export type Signal<T> = {
+export type Signal<Wrapped> = {
     [Symbol.signal]: true;
-    get(): T;
-    changes(): AsyncIterable<T> & Disposable;
+    get(): Wrapped;
+    changes(): AsyncIterable<Wrapped> & Disposable;
 };
 
-export type State<T> = Signal<T> & {
-    set(newValue: T): void;
-    update(updater: (oldValue: T) => T): void;
-    // mutate(mutator: (inoutValue: T) => void): void;
+export type State<Wrapped> = Signal<Wrapped> & {
+    set(newValue: Wrapped): void;
+    update(updater: (oldValue: Wrapped) => Wrapped): void;
+    // mutate(mutator: (inoutValue: Wrapped) => void): void;
 };
 
-class StateImpl<T> implements State<T> {
+class StateImpl<Wrapped> implements State<Wrapped> {
     [Symbol.signal]: true = true;
 
-    #signal: Signal.State<T>;
+    #signal: Signal.State<Wrapped>;
 
-    constructor(initialValue: T) {
+    constructor(initialValue: Wrapped) {
         this.#signal = new Signal.State(initialValue);
     }
 
-    get(): T {
+    get(): Wrapped {
         return this.#signal.get();
     }
 
-    set(newValue: T) {
+    set(newValue: Wrapped) {
         this.#signal.set(newValue);
     }
 
-    update(updater: (oldValue: T) => T) {
+    update(updater: (oldValue: Wrapped) => Wrapped) {
         return updater(this.get());
     }
 
     // TODO: In-place mutation
-    // mutate(mutator: (inoutValue: T) => void) {
+    // mutate(mutator: (inoutValue: Wrapped) => void) {
     //     mutator(this.get());
     // }
 
     changes() {
-        return new SignalIterator<T>(this.#signal);
+        return new SignalIterator<Wrapped>(this.#signal);
     }
 }
 
-class SignalIterator<T> implements AsyncIterable<T>, Disposable {
-    #signal: Signal.State<T> | Signal.Computed<T>;
+class SignalIterator<Wrapped> implements AsyncIterable<Wrapped>, Disposable {
+    #signal: Signal.State<Wrapped> | Signal.Computed<Wrapped>;
     #ref?: EffectRef = undefined;
 
-    constructor(signal: Signal.State<T> | Signal.Computed<T>) {
+    constructor(signal: Signal.State<Wrapped> | Signal.Computed<Wrapped>) {
         this.#signal = signal;
     }
 
     async *[Symbol.asyncIterator]() {
-        let promises: Promise<T>[] = [];
-        let resolve: (value: T) => void;
+        let promises: Promise<Wrapped>[] = [];
+        let resolve: (value: Wrapped) => void;
         promises.push(
             new Promise(r => {
                 resolve = r;
@@ -89,16 +89,16 @@ class SignalIterator<T> implements AsyncIterable<T>, Disposable {
     }
 }
 
-export function state<T>(initialValue: T): State<T> {
+export function state<Wrapped>(initialValue: Wrapped): State<Wrapped> {
     return new StateImpl(initialValue);
 }
 
-export function computed<T>(computation: () => T): Signal<T> {
+export function computed<Wrapped>(computation: () => Wrapped): Signal<Wrapped> {
     let signal = new Signal.Computed(computation);
     return {
         [Symbol.signal]: true,
         get: () => signal.get(),
-        changes: () => new SignalIterator<T>(signal),
+        changes: () => new SignalIterator<Wrapped>(signal),
     };
 }
 
